@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de QR Code</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to right, #e0e0e0, #f4f4f9);
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 700px;
+            min-height: 400px;
+        }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            width: 50%;
+            padding-right: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        input {
+            background-color: #f9f9f9;
+        }
+        button {
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .generate-btn {
+            background: linear-gradient(45deg, #007BFF, #0056b3);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.4);
+        }
+        .generate-btn:hover {
+            background: linear-gradient(45deg, #0056b3, #007BFF);
+            box-shadow: 0 6px 15px rgba(0, 123, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .action-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .action-btns button {
+            background: linear-gradient(45deg, #28a745, #218838);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.4);
+        }
+        .action-btns button:hover {
+            background: linear-gradient(45deg, #218838, #28a745);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.5);
+            transform: translateY(-2px);
+        }
+        #resultado {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 45%;
+            height: 300px;
+            background-color: #f4f4f9;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 10px;
+            justify-self: center;
+        }
+        img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1>Gerador de QR Code</h1>
+            <input type="text" id="data" placeholder="Digite os dados para o QR Code">
+            <input type="number" id="size" placeholder="Tamanho (px)" min="50" max="500" value="200">
+            <button class="generate-btn" onclick="gerarQRCode()">Gerar QR Code</button>
+            <div class="action-btns">
+                <button onclick="imprimirQRCode()">Imprimir QR Code</button>
+                <button onclick="exportarParaPDF()">Exportar para PDF</button>
+                <button onclick="compartilharQRCode()">Compartilhar</button>
+                <button onclick="copiarParaClipboard()">Copiar QR Code</button>
+            </div>
+        </div>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        function gerarQRCode() {
+            const data = document.getElementById("data").value;
+            const size = document.getElementById("size").value;
+            
+            if (!data) {
+                alert("Por favor, insira os dados para gerar o QR Code.");
+                return;
+            }
+            
+            const url = `https://api.apgy.in/qr/?data=${encodeURIComponent(data)}&size=${size}`;
+            document.getElementById("resultado").innerHTML = `<img id="qrcode" src="${url}" alt="QR Code">`;
+        }
+
+        function imprimirQRCode() {
+            const qrCode = document.getElementById("qrcode");
+            if (!qrCode) {
+                alert("Por favor, gere um QR Code primeiro.");
+                return;
+            }
+            const win = window.open();
+            win.document.write('<img src="' + qrCode.src + '" onload="window.print(); window.close();">');
+        }
+
+        function exportarParaPDF() {
+            const qrCode = document.getElementById("qrcode");
+            if (!qrCode) {
+                alert("Por favor, gere um QR Code primeiro.");
+                return;
+            }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.addImage(qrCode.src, 'PNG', 10, 10, 100, 100);
+            doc.save("qrcode.pdf");
+        }
+
+        function compartilharQRCode() {
+            const qrCode = document.getElementById("qrcode");
+            if (!qrCode) {
+                alert("Por favor, gere um QR Code primeiro.");
+                return;
+            }
+            if (navigator.share) {
+                navigator.share({
+                    title: "Meu QR Code",
+                    text: "Aqui está o QR Code gerado!",
+                    url: qrCode.src
+                }).catch(err => console.error("Erro ao compartilhar", err));
+            } else {
+                alert("Seu navegador não suporta compartilhamento de mídia.");
+            }
+        }
+
+        function copiarParaClipboard() {
+            const qrCode = document.getElementById("qrcode");
+            if (!qrCode) {
+                alert("Por favor, gere um QR Code primeiro.");
+                return;
+            }
+            fetch(qrCode.src)
+                .then(res => res.blob())
+                .then(blob => navigator.clipboard.write([new ClipboardItem({'image/png': blob})]))
+                .then(() => alert("QR Code copiado para a área de transferência!"))
+                .catch(err => console.error("Erro ao copiar", err));
+        }
+    </script>
+</body>
+</html>
