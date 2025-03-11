@@ -1,189 +1,586 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de QR Code</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(to right, #e0e0e0, #f4f4f9);
-            margin: 0;
-        }
-        .container {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-            background: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 700px;
-            min-height: 400px;
-        }
-        .form-container {
-            display: flex;
-            flex-direction: column;
-            width: 50%;
-            padding-right: 20px;
-        }
-        h1 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        input, button {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            font-size: 16px;
-        }
-        input {
-            background-color: #f9f9f9;
-        }
-        button {
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        .generate-btn {
-            background: linear-gradient(45deg, #007BFF, #0056b3);
-            color: white;
-            border: none;
-            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.4);
-        }
-        .generate-btn:hover {
-            background: linear-gradient(45deg, #0056b3, #007BFF);
-            box-shadow: 0 6px 15px rgba(0, 123, 255, 0.5);
-            transform: translateY(-2px);
-        }
-        .action-btns {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .action-btns button {
-            background: linear-gradient(45deg, #28a745, #218838);
-            color: white;
-            border: none;
-            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.4);
-        }
-        .action-btns button:hover {
-            background: linear-gradient(45deg, #218838, #28a745);
-            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.5);
-            transform: translateY(-2px);
-        }
-        #resultado {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 45%;
-            height: 300px;
-            background-color: #f4f4f9;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 10px;
-            justify-self: center;
-        }
-        img {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 5px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Projects: QR Code & Conversor de Documentos (V1.0)</title>
+  <!-- jsPDF para gerar PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Biblioteca para converter HTML em DOCX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.4.1/html-docx.min.js"></script>
+  <!-- Biblioteca SheetJS para gerar Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    /* Estilos Gerais */
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #e0e0e0, #f4f4f9);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #007BFF;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    header nav a {
+      color: white;
+      margin: 0 10px;
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    header nav a:hover {
+      text-decoration: underline;
+    }
+    /* Seções dos projetos */
+    .project-section {
+      display: none;
+      padding: 30px;
+    }
+    .active {
+      display: block;
+    }
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin: 20px auto;
+      max-width: 800px;
+    }
+    /* Responsividade */
+    @media (max-width: 600px) {
+      .qr-form, .doc-form {
+        flex-direction: column;
+      }
+      .qr-form .form-container, .qr-form #resultado {
+        width: 100%;
+      }
+    }
+    /* Gerador de QR Code */
+    .qr-form {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .qr-form .form-container {
+      display: flex;
+      flex-direction: column;
+      width: 50%;
+      padding-right: 20px;
+    }
+    .qr-form h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .qr-form input, .qr-form button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    .qr-form input {
+      background-color: #f9f9f9;
+    }
+    .qr-form button {
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .generate-btn {
+      background: linear-gradient(45deg, #007BFF, #0056b3);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 10px rgba(0,123,255,0.4);
+    }
+    .generate-btn:hover {
+      background: linear-gradient(45deg, #0056b3, #007BFF);
+      box-shadow: 0 6px 15px rgba(0,123,255,0.5);
+      transform: translateY(-2px);
+    }
+    .action-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .action-btns button {
+      background: linear-gradient(45deg, #28a745, #218838);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 10px rgba(40,167,69,0.4);
+    }
+    .action-btns button:hover {
+      background: linear-gradient(45deg, #218838, #28a745);
+      box-shadow: 0 6px 15px rgba(40,167,69,0.5);
+      transform: translateY(-2px);
+    }
+    #resultado {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 45%;
+      height: 300px;
+      background-color: #f4f4f9;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-top: 10px;
+    }
+    #resultado img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 5px;
+    }
+    /* Histórico de QR Codes */
+    #qrHistory {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+    #qrHistory h3 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    #qrHistory .history-item {
+      display: inline-block;
+      margin-right: 10px;
+    }
+    #qrHistory .history-item img {
+      width: 60px;
+      height: 60px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    /* Conversor de Documentos */
+    .doc-form {
+      display: flex;
+      flex-direction: column;
+    }
+    .doc-form h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .doc-form label {
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    /* Área de importação com Drag & Drop */
+    #dropZone {
+      border: 2px dashed #007BFF;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      color: #007BFF;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    #dropZone.dragover {
+      background-color: #e0e0ff;
+    }
+    .doc-form input[type="file"],
+    .doc-form select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      background-color: #f9f9f9;
+    }
+    .doc-form button {
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(45deg, #007BFF, #0056b3);
+      color: white;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .doc-form button:hover {
+      background: linear-gradient(45deg, #0056b3, #007BFF);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0,123,255,0.5);
+    }
+    /* Spinner e feedback */
+    #spinner {
+      display: none;
+      margin: 10px auto;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007BFF;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #filePreview {
+      background: #f1f1f1;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      max-height: 150px;
+      overflow: auto;
+      font-size: 14px;
+      color: #333;
+    }
+    #errorMessage {
+      color: red;
+      margin: 10px 0;
+    }
+    /* Botão Reset */
+    #resetBtn {
+      background: #dc3545;
+      margin-top: 10px;
+    }
+    #resetBtn:hover {
+      background: #c82333;
+    }
+  </style>
 </head>
 <body>
+  <!-- Cabeçalho com links para as seções -->
+  <header>
+    <nav>
+      <a onclick="showSection('qrSection')">Gerador de QR Code</a>
+      <a onclick="showSection('docSection')">Conversor de Documentos</a>
+    </nav>
+  </header>
+
+  <!-- Seção do Gerador de QR Code -->
+  <div id="qrSection" class="project-section active">
     <div class="container">
+      <div class="qr-form">
         <div class="form-container">
-            <h1>Gerador de QR Code</h1>
-            <input type="text" id="data" placeholder="Digite os dados para o QR Code">
-            <input type="number" id="size" placeholder="Tamanho (px)" min="50" max="500" value="200">
-            <button class="generate-btn" onclick="gerarQRCode()">Gerar QR Code</button>
-            <div class="action-btns">
-                <button onclick="imprimirQRCode()">Imprimir QR Code</button>
-                <button onclick="exportarParaPDF()">Exportar para PDF</button>
-                <button onclick="compartilharQRCode()">Compartilhar</button>
-                <button onclick="copiarParaClipboard()">Copiar QR Code</button>
-            </div>
+          <h1>Gerador de QR Code</h1>
+          <input type="text" id="data" placeholder="Digite os dados para o QR Code">
+          <input type="number" id="size" placeholder="Tamanho (px)" min="50" max="500" value="200">
+          <button class="generate-btn" onclick="gerarQRCode()">Gerar QR Code</button>
+          <div class="action-btns">
+            <button onclick="imprimirQRCode()">Imprimir QR Code</button>
+            <button onclick="exportarParaPDF()">Exportar para PDF</button>
+            <button onclick="compartilharQRCode()">Compartilhar</button>
+            <button onclick="copiarParaClipboard()">Copiar QR Code</button>
+          </div>
         </div>
-
         <div id="resultado"></div>
+      </div>
+      <!-- Histórico de QR Codes Gerados -->
+      <div id="qrHistory">
+        <h3>Histórico</h3>
+        <div id="historyList"></div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        function gerarQRCode() {
-            const data = document.getElementById("data").value;
-            const size = document.getElementById("size").value;
-            
-            if (!data) {
-                alert("Por favor, insira os dados para gerar o QR Code.");
-                return;
-            }
-            
-            const url = `https://api.apgy.in/qr/?data=${encodeURIComponent(data)}&size=${size}`;
-            document.getElementById("resultado").innerHTML = `<img id="qrcode" src="${url}" alt="QR Code">`;
-        }
+  <!-- Seção do Conversor de Documentos -->
+  <div id="docSection" class="project-section">
+    <div class="container">
+      <div class="doc-form">
+        <h1>Conversor de Documentos</h1>
+        <label for="importFile">Importe seu arquivo:</label>
+        <!-- Área de Drag & Drop + Input File oculto -->
+        <div id="dropZone">Arraste e solte seu arquivo aqui ou clique para selecionar</div>
+        <input type="file" id="importFile" accept=".txt,.csv,.html" style="display:none;">
+        <div id="fileInfo"></div>
+        <div id="filePreview"></div>
+        <button id="resetBtn" onclick="resetFile()">Reset</button>
+        <label for="docFormat">Formato de saída:</label>
+        <select id="docFormat">
+          <option value="pdf">PDF</option>
+          <option value="docx">DOCX</option>
+          <option value="html">HTML</option>
+          <option value="txt">TXT</option>
+          <option value="xlsx">Excel (XLSX)</option>
+        </select>
+        <div id="errorMessage"></div>
+        <div id="spinner"></div>
+        <button onclick="converterDocumento()">Converter</button>
+        <div id="downloadLink"></div>
+      </div>
+    </div>
+  </div>
 
-        function imprimirQRCode() {
-            const qrCode = document.getElementById("qrcode");
-            if (!qrCode) {
-                alert("Por favor, gere um QR Code primeiro.");
-                return;
-            }
-            const win = window.open();
-            win.document.write('<img src="' + qrCode.src + '" onload="window.print(); window.close();">');
-        }
+  <script>
+    /***********************
+     * Funções de Navegação
+     ***********************/
+    function showSection(sectionId) {
+      document.querySelectorAll('.project-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById(sectionId).classList.add('active');
+    }
 
-        function exportarParaPDF() {
-            const qrCode = document.getElementById("qrcode");
-            if (!qrCode) {
-                alert("Por favor, gere um QR Code primeiro.");
-                return;
-            }
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.addImage(qrCode.src, 'PNG', 10, 10, 100, 100);
-            doc.save("qrcode.pdf");
-        }
+    /***********************
+     * Funções do Gerador de QR Code
+     ***********************/
+    const qrHistory = [];
 
-        function compartilharQRCode() {
-            const qrCode = document.getElementById("qrcode");
-            if (!qrCode) {
-                alert("Por favor, gere um QR Code primeiro.");
-                return;
-            }
-            if (navigator.share) {
-                navigator.share({
-                    title: "Meu QR Code",
-                    text: "Aqui está o QR Code gerado!",
-                    url: qrCode.src
-                }).catch(err => console.error("Erro ao compartilhar", err));
-            } else {
-                alert("Seu navegador não suporta compartilhamento de mídia.");
-            }
-        }
+    function gerarQRCode() {
+      const data = document.getElementById("data").value;
+      const size = document.getElementById("size").value;
+      if (!data) {
+        alert("Por favor, insira os dados para gerar o QR Code.");
+        return;
+      }
+      const url = `https://api.apgy.in/qr/?data=${encodeURIComponent(data)}&size=${size}`;
+      document.getElementById("resultado").innerHTML = `<img id="qrcode" src="${url}" alt="QR Code">`;
+      addToQRHistory(url);
+    }
 
-        function copiarParaClipboard() {
-            const qrCode = document.getElementById("qrcode");
-            if (!qrCode) {
-                alert("Por favor, gere um QR Code primeiro.");
-                return;
-            }
-            fetch(qrCode.src)
-                .then(res => res.blob())
-                .then(blob => navigator.clipboard.write([new ClipboardItem({'image/png': blob})]))
-                .then(() => alert("QR Code copiado para a área de transferência!"))
-                .catch(err => console.error("Erro ao copiar", err));
+    function addToQRHistory(url) {
+      // Armazena o URL e atualiza o histórico (limita a 5 itens)
+      qrHistory.unshift(url);
+      if (qrHistory.length > 5) qrHistory.pop();
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = "";
+      qrHistory.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `<img src="${item}" alt="Histórico QR">`;
+        historyList.appendChild(div);
+      });
+    }
+
+    function imprimirQRCode() {
+      const qrCode = document.getElementById("qrcode");
+      if (!qrCode) { alert("Por favor, gere um QR Code primeiro."); return; }
+      const win = window.open();
+      win.document.write('<img src="' + qrCode.src + '" onload="window.print(); window.close();">');
+    }
+
+    function exportarParaPDF() {
+      const qrCode = document.getElementById("qrcode");
+      if (!qrCode) { alert("Por favor, gere um QR Code primeiro."); return; }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.addImage(qrCode.src, 'PNG', 10, 10, 100, 100);
+      doc.save("qrcode.pdf");
+    }
+
+    function compartilharQRCode() {
+      const qrCode = document.getElementById("qrcode");
+      if (!qrCode) { alert("Por favor, gere um QR Code primeiro."); return; }
+      if (navigator.share) {
+        navigator.share({
+          title: "Meu QR Code",
+          text: "Aqui está o QR Code gerado!",
+          url: qrCode.src
+        }).catch(err => console.error("Erro ao compartilhar", err));
+      } else {
+        alert("Seu navegador não suporta compartilhamento de mídia.");
+      }
+    }
+
+    function copiarParaClipboard() {
+      const qrCode = document.getElementById("qrcode");
+      if (!qrCode) { alert("Por favor, gere um QR Code primeiro."); return; }
+      fetch(qrCode.src)
+        .then(res => res.blob())
+        .then(blob => navigator.clipboard.write([new ClipboardItem({'image/png': blob})]))
+        .then(() => alert("QR Code copiado para a área de transferência!"))
+        .catch(err => console.error("Erro ao copiar", err));
+    }
+
+    /***********************
+     * Funções do Conversor de Documentos
+     ***********************/
+    let importedContent = "";
+    let selectedFile = null;
+
+    // Função para resetar feedback (erro, etc.)
+    function resetFeedback() {
+      document.getElementById("errorMessage").innerText = "";
+    }
+
+    // Configura eventos para a área de drag & drop e clique para selecionar arquivo
+    const dropZone = document.getElementById("dropZone");
+    const importFileInput = document.getElementById("importFile");
+
+    dropZone.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      importFileInput.click();
+    });
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove("dragover");
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        console.log("Arquivo solto:", files[0].name);
+        importFile(files[0]);
+        e.dataTransfer.clearData();
+      }
+    });
+
+    importFileInput.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        importFile(e.target.files[0]);
+      }
+    });
+
+    // Função para validar e ler o arquivo importado
+    function importFile(file) {
+      resetFeedback();
+      // Permite apenas arquivos de texto, CSV e HTML
+      const allowedExtensions = [".txt", ".csv", ".html"];
+      const fileName = file.name;
+      const ext = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+      if (!allowedExtensions.includes(ext)) {
+        showError("Formato de arquivo não suportado. Use: TXT, CSV ou HTML.");
+        return;
+      }
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        importedContent = e.target.result;
+        document.getElementById("fileInfo").innerText = `Arquivo importado: ${fileName} (${(file.size / 1024).toFixed(1)} KB)`;
+        // Exibe uma pré-visualização (primeiros 300 caracteres)
+        document.getElementById("filePreview").innerText = importedContent.substring(0, 300) + (importedContent.length > 300 ? "..." : "");
+      };
+      reader.onerror = function() {
+        showError("Erro ao ler o arquivo.");
+      };
+      reader.readAsText(file);
+    }
+
+    // Função para limpar feedback e a importação
+    function resetFile() {
+      importedContent = "";
+      selectedFile = null;
+      document.getElementById("fileInfo").innerText = "";
+      document.getElementById("filePreview").innerText = "";
+      importFileInput.value = "";
+      document.getElementById("downloadLink").innerHTML = "";
+      document.getElementById("errorMessage").innerText = "";
+    }
+
+    // Exibe mensagem de erro
+    function showError(message) {
+      document.getElementById("errorMessage").innerText = message;
+    }
+
+    // Exibe ou oculta o spinner
+    function showSpinner(show) {
+      document.getElementById("spinner").style.display = show ? "block" : "none";
+    }
+
+    // Função para converter o documento para o formato selecionado
+    function converterDocumento() {
+      const { jsPDF } = window.jspdf;
+      const format = document.getElementById("docFormat").value;
+      if (!importedContent) {
+        showError("Por favor, importe um arquivo primeiro.");
+        return;
+      }
+      // Salva o formato escolhido no localStorage
+      localStorage.setItem("lastFormat", format);
+      // Limpa área de download e erros
+      document.getElementById("downloadLink").innerHTML = "";
+      showError("");
+      showSpinner(true);
+
+      setTimeout(() => { // Simula processamento
+        if (format === "pdf") {
+          const doc = new jsPDF();
+          const lines = doc.splitTextToSize(importedContent, 180);
+          doc.text(lines, 10, 10);
+          const blob = doc.output("blob");
+          triggerDownload(blob, "documento.pdf");
+        } else if (format === "docx") {
+          const html = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <title>Documento</title>
+              </head>
+              <body>
+                <p>${importedContent.replace(/\n/g, "<br>")}</p>
+              </body>
+            </html>`;
+          const converted = htmlDocx.asBlob(html);
+          triggerDownload(converted, "documento.docx");
+        } else if (format === "html") {
+          const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <title>Documento</title>
+              </head>
+              <body>
+                <pre>${importedContent}</pre>
+              </body>
+            </html>`;
+          const blob = new Blob([htmlContent], {type: "text/html"});
+          triggerDownload(blob, "documento.html");
+        } else if (format === "txt") {
+          const blob = new Blob([importedContent], {type: "text/plain"});
+          triggerDownload(blob, "documento.txt");
+        } else if (format === "xlsx") {
+          // Converter para Excel utilizando SheetJS
+          const rows = importedContent.split('\n').map(line => [line]);
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+          XLSX.writeFile(wb, "documento.xlsx");
+          // O SheetJS já dispara o download automaticamente
         }
-    </script>
+        showSpinner(false);
+      }, 1000); // tempo simulado de processamento
+    }
+
+    // Função que cria um link de download e o exibe para o usuário
+    function triggerDownload(blob, fileName) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.innerText = `Clique aqui para baixar ${fileName}`;
+      const downloadDiv = document.getElementById("downloadLink");
+      downloadDiv.innerHTML = "";
+      downloadDiv.appendChild(link);
+      // Também dispara download automático:
+      link.click();
+    }
+
+    // Ao carregar a página, restaura o último formato escolhido
+    window.addEventListener("load", () => {
+      const lastFormat = localStorage.getItem("lastFormat");
+      if (lastFormat) {
+        document.getElementById("docFormat").value = lastFormat;
+      }
+    });
+  </script>
 </body>
 </html>
