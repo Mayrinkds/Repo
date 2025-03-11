@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de QR Code para Wi-Fi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f3a683, #778beb);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      padding: 30px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+    h2 {
+      color: #333;
+      font-weight: 600;
+    }
+    label {
+      display: block;
+      text-align: left;
+      font-weight: 500;
+      color: #555;
+      margin-top: 10px;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 5px 0 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s ease;
+      appearance: none;
+      display: block;
+      box-sizing: border-box;
+    }
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    button {
+      flex: 1 1 calc(50% - 10px);
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      min-width: 130px;
+    }
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    #qrcode {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Gerador de QR Code Wi-Fi</h2>
+    
+    <label for="ssid">SSID Wi-Fi</label>
+    <input type="text" id="ssid" placeholder="Nome da Rede">
+    
+    <label for="password">Senha</label>
+    <input type="password" id="password" placeholder="Senha da Rede">
+    
+    <label for="encryption">Tipo de rede</label>
+    <select id="encryption">
+      <option value="WPA">WPA</option>
+      <option value="WPA2">WPA2</option>
+      <option value="WEP">WEP</option>
+      <option value="nopass">Sem criptografia</option>
+    </select>
+    
+    <div class="button-group">
+      <button id="generateBtn">Gerar código QR</button>
+      <button id="clearBtn">Limpar QR Code</button>
+      <button id="exportBtn">Exportar QR Code</button>
+      <button id="shareBtn">Compartilhar QR Code</button>
+    </div>
+    
+    <div id="qrcode"></div>
+  </div>
+  
+  <script>
+    function generateQRCode() {
+      const ssid = document.getElementById("ssid").value;
+      const password = document.getElementById("password").value;
+      const encryption = document.getElementById("encryption").value;
+      if (!ssid) {
+        alert("Por favor, insira o nome da rede Wi-Fi.");
+        return;
+      }
+      let qrData = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
+      document.getElementById("qrcode").innerHTML = "";
+      new QRCode(document.getElementById("qrcode"), qrData);
+    }
+    
+    function clearQRCode() {
+      document.getElementById("qrcode").innerHTML = "";
+    }
+    
+    function exportQRCode() {
+      const qrCanvas = document.querySelector("#qrcode canvas");
+      if (!qrCanvas) {
+        alert("Nenhum QR Code foi gerado ainda!");
+        return;
+      }
+      const link = document.createElement("a");
+      link.href = qrCanvas.toDataURL("image/png");
+      link.download = "qrcode_wifi.png";
+      link.click();
+    }
+    
+    function shareQRCode() {
+      const qrCanvas = document.querySelector("#qrcode canvas");
+      if (!qrCanvas) {
+        alert("Nenhum QR Code foi gerado ainda!");
+        return;
+      }
+      qrCanvas.toBlob(blob => {
+        const file = new File([blob], "qrcode_wifi.png", { type: "image/png" });
+        const data = {
+          files: [file]
+        };
+        if (navigator.canShare && navigator.canShare(data)) {
+          navigator.share(data).catch(error => console.log("Erro ao compartilhar", error));
+        } else {
+          alert("Seu navegador não suporta o compartilhamento de arquivos.");
+        }
+      });
+    }
+    
+    document.getElementById("generateBtn").addEventListener("click", generateQRCode);
+    document.getElementById("clearBtn").addEventListener("click", clearQRCode);
+    document.getElementById("exportBtn").addEventListener("click", exportQRCode);
+    document.getElementById("shareBtn").addEventListener("click", shareQRCode);
+  </script>
+</body>
+</html>
