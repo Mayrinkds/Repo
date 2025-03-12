@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Projects: QR Code, Conversor de Documentos e Wi‑Fi QR Code (V1.0)</title>
+  <!-- Bibliotecas utilizadas -->
+  <!-- jsPDF para gerar PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- html-docx-js para converter HTML em DOCX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.4.1/html-docx.min.js"></script>
+  <!-- SheetJS para gerar Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- qrcodejs para gerar QR Code (Wi‑Fi) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* Estilos Gerais (inspirados no primeiro código) */
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #e0e0e0, #f4f4f9);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #007BFF;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    header nav a {
+      color: white;
+      margin: 0 10px;
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    header nav a:hover {
+      text-decoration: underline;
+    }
+    /* Seções dos projetos */
+    .project-section {
+      display: none;
+      padding: 30px;
+    }
+    .active {
+      display: block;
+    }
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin: 20px auto;
+      max-width: 800px;
+    }
+    /* Responsividade */
+    @media (max-width: 600px) {
+      .qr-form, .doc-form {
+        flex-direction: column;
+      }
+      .qr-form .form-container, .qr-form #resultado {
+        width: 100%;
+      }
+    }
+    /* Gerador de QR Code (primeira seção) */
+    .qr-form {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .qr-form .form-container {
+      display: flex;
+      flex-direction: column;
+      width: 50%;
+      padding-right: 20px;
+    }
+    .qr-form h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .qr-form input, .qr-form button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    .qr-form input {
+      background-color: #f9f9f9;
+    }
+    .qr-form button {
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .generate-btn {
+      background: linear-gradient(45deg, #007BFF, #0056b3);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 10px rgba(0,123,255,0.4);
+    }
+    .generate-btn:hover {
+      background: linear-gradient(45deg, #0056b3, #007BFF);
+      box-shadow: 0 6px 15px rgba(0,123,255,0.5);
+      transform: translateY(-2px);
+    }
+    .action-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .action-btns button {
+      background: linear-gradient(45deg, #28a745, #218838);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 10px rgba(40,167,69,0.4);
+    }
+    .action-btns button:hover {
+      background: linear-gradient(45deg, #218838, #28a745);
+      box-shadow: 0 6px 15px rgba(40,167,69,0.5);
+      transform: translateY(-2px);
+    }
+    #resultado {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 45%;
+      height: 300px;
+      background-color: #f4f4f9;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-top: 10px;
+    }
+    #resultado img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 5px;
+    }
+    /* Histórico de QR Codes */
+    #qrHistory {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+    #qrHistory h3 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    #qrHistory .history-item {
+      display: inline-block;
+      margin-right: 10px;
+    }
+    #qrHistory .history-item img {
+      width: 60px;
+      height: 60px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    /* Conversor de Documentos */
+    .doc-form {
+      display: flex;
+      flex-direction: column;
+    }
+    .doc-form h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .doc-form label {
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    /* Área de importação com Drag & Drop */
+    #dropZone {
+      border: 2px dashed #007BFF;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      color: #007BFF;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    #dropZone.dragover {
+      background-color: #e0e0ff;
+    }
+    .doc-form input[type="file"],
+    .doc-form select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      background-color: #f9f9f9;
+    }
+    .doc-form button {
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(45deg, #007BFF, #0056b3);
+      color: white;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .doc-form button:hover {
+      background: linear-gradient(45deg, #0056b3, #007BFF);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0,123,255,0.5);
+    }
+    /* Spinner e feedback */
+    #spinner {
+      display: none;
+      margin: 10px auto;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007BFF;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #filePreview {
+      background: #f1f1f1;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      max-height: 150px;
+      overflow: auto;
+      font-size: 14px;
+      color: #333;
+    }
+    #errorMessage {
+      color: red;
+      margin: 10px 0;
+    }
+    /* Botão Reset */
+    #resetBtn {
+      background: #dc3545;
+      margin-top: 10px;
+    }
+    #resetBtn:hover {
+      background: #c82333;
+    }
+    /* Seção Wi‑Fi (estilos adicionais para diferenciar a seção) */
+    #wifiSection h2 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    /* Estilos próprios para o gerador de QR Code Wi‑Fi */
+    .wifi-form label {
+      display: block;
+      text-align: left;
+      font-weight: 500;
+      color: #555;
+      margin-top: 10px;
+    }
+    .wifi-form input, .wifi-form select {
+      width: 100%;
+      padding: 12px;
+      margin: 5px 0 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .wifi-form .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .wifi-form button {
+      flex: 1 1 calc(50% - 10px);
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      min-width: 130px;
+    }
+    .wifi-form button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    #qrcodeWifi {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabeçalho com links para as seções -->
+  <header>
+    <nav>
+      <a onclick="showSection('qrSection')">Gerador de QR Code</a>
+      <a onclick="showSection('docSection')">Conversor de Documentos</a>
+      <a onclick="showSection('wifiSection')">Wi‑Fi QR Code</a>
+    </nav>
+  </header>
+
+  <!-- Seção 1: Gerador de QR Code (genérico) -->
+  <div id="qrSection" class="project-section active">
+    <div class="container">
+      <div class="qr-form">
+        <div class="form-container">
+          <h1>Gerador de QR Code</h1>
+          <input type="text" id="data" placeholder="Digite os dados para o QR Code">
+          <input type="number" id="size" placeholder="Tamanho (px)" min="50" max="500" value="200">
+          <button class="generate-btn" onclick="gerarQRCode()">Gerar QR Code</button>
+          <div class="action-btns">
+            <button onclick="imprimirQRCode()">Imprimir QR Code</button>
+            <button onclick="exportarParaPDF()">Exportar para PDF</button>
+            <button onclick="compartilharQRCode()">Compartilhar</button>
+            <button onclick="copiarParaClipboard()">Copiar QR Code</button>
+          </div>
+        </div>
+        <div id="resultado"></div>
+      </div>
+      <!-- Histórico de QR Codes Gerados -->
+      <div id="qrHistory">
+        <h3>Histórico</h3>
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seção 2: Conversor de Documentos -->
+  <div id="docSection" class="project-section">
+    <div class="container">
+      <div class="doc-form">
+        <h1>Conversor de Documentos</h1>
+        <label for="importFile">Importe seu arquivo:</label>
+        <!-- Área de Drag & Drop + Input File oculto -->
+        <div id="dropZone">Arraste e solte seu arquivo aqui ou clique para selecionar</div>
+        <input type="file" id="importFile" accept=".txt,.csv,.html" style="display:none;">
+        <div id="fileInfo"></div>
+        <div id="filePreview"></div>
+        <button id="resetBtn" onclick="resetFile()">Reset</button>
+        <label for="docFormat">Formato de saída:</label>
+        <select id="docFormat">
+          <option value="pdf">PDF</option>
+          <option value="docx">DOCX</option>
+          <option value="html">HTML</option>
+          <option value="txt">TXT</option>
+          <option value="xlsx">Excel (XLSX)</option>
+        </select>
+        <div id="errorMessage"></div>
+        <div id="spinner"></div>
+        <button onclick="converterDocumento()">Converter</button>
+        <div id="downloadLink"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seção 3: Gerador de QR Code para Wi‑Fi -->
+  <div id="wifiSection" class="project-section">
+    <div class="container">
+      <div class="wifi-form">
+        <h2>Gerador de QR Code Wi‑Fi</h2>
+        <label for="ssid">SSID Wi‑Fi</label>
+        <input type="text" id="ssid" placeholder="Nome da Rede">
+        <label for="password">Senha</label>
+        <input type="password" id="password" placeholder="Senha da Rede">
+        <label for="encryption">Tipo de rede</label>
+        <select id="encryption">
+          <option value="WPA">WPA</option>
+          <option value="WPA2">WPA2</option>
+          <option value="WEP">WEP</option>
+          <option value="nopass">Sem criptografia</option>
+        </select>
+        <div class="button-group">
+          <button id="generateBtn">Gerar código QR</button>
+          <button id="clearBtn">Limpar QR Code</button>
+          <button id="exportBtn">Exportar QR Code</button>
+          <button id="shareBtn">Compartilhar QR Code</button>
+        </div>
+        <div id="qrcodeWifi"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    
+    /***********************
+     * Funções de Navegação
+     ***********************/
+    function showSection(sectionId) {
+      document.querySelectorAll('.project-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById(sectionId).classList.add('active');
+    }
+
+    /*********************************
+     * Funções do Gerador de QR Code (Genérico)
+     *********************************/
+    const qrHistory = [];
+
+    function gerarQRCode() {
+      const data = document.getElementById("data").value;
+      const size = document.getElementById("size").value;
+      if (!data) {
+        alert("Por favor, insira os dados para gerar o QR Code.");
+        return;
+      }
+      const url = `https://api.apgy.in/qr/?data=${encodeURIComponent(data)}&size=${size}`;
+      document.getElementById("resultado").innerHTML = `<img id="qrcode" src="${url}" alt="QR Code">`;
+      addToQRHistory(url);
+    }
+
+    function addToQRHistory(url) {
+      qrHistory.unshift(url);
+      if (qrHistory.length > 5) qrHistory.pop();
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = "";
+      qrHistory.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `<img src="${item}" alt="Histórico QR">`;
+        historyList.appendChild(div);
+      });
+    }
+
+    function imprimirQRCode() {
+      const qrCode = document.getElementById("qrcode");
+      if (!qrCode) { 
+        alert("Por favor, gere um QR Code primeiro."); 
+        return; 
+      }
+      const win = window.open();
+      win.document.write('<img src="' + qrCode.src + '" onload="window.print(); window.close();">');
+    }
+
+    function exportarParaPDF() {
+      const qrCode = document.getElementById("qrcode");
+      if (!qrCode) { 
+        alert("Por favor, gere um QR Code primeiro."); 
+        return; 
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.addImage(qrCode.src, 'PNG', 10, 10, 100, 100);
+      doc.save("qrcode.pdf");
+    }
+
+    function compartilharQRCode() {
+      const qrCode = document.getElementById("qrcode");
+      if (!qrCode) { 
+        alert("Por favor, gere um QR Code primeiro."); 
+        return; 
+      }
+      if (navigator.share) {
+        navigator.share({
+          title: "Meu QR Code",
+          text: "Aqui está o QR Code gerado!",
+          url: qrCode.src
+        }).catch(err => console.error("Erro ao compartilhar", err));
+      } else {
+        alert("Seu navegador não suporta compartilhamento de mídia.");
+      }
+    }
+
+    function copiarParaClipboard() {
+      const qrCode = document.getElementById("qrcode");
+      if (!qrCode) { 
+        alert("Por favor, gere um QR Code primeiro."); 
+        return; 
+      }
+      fetch(qrCode.src)
+        .then(res => res.blob())
+        .then(blob => navigator.clipboard.write([new ClipboardItem({'image/png': blob})]))
+        .then(() => alert("QR Code copiado para a área de transferência!"))
+        .catch(err => console.error("Erro ao copiar", err));
+    }
+
+    /*********************************
+     * Funções do Conversor de Documentos
+     *********************************/
+    let importedContent = "";
+    let selectedFile = null;
+
+    function resetFeedback() {
+      document.getElementById("errorMessage").innerText = "";
+    }
+
+    const dropZone = document.getElementById("dropZone");
+    const importFileInput = document.getElementById("importFile");
+
+    dropZone.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      importFileInput.click();
+    });
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove("dragover");
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        importFile(files[0]);
+        e.dataTransfer.clearData();
+      }
+    });
+
+    importFileInput.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        importFile(e.target.files[0]);
+      }
+    });
+
+    function importFile(file) {
+      resetFeedback();
+      const allowedExtensions = [".txt", ".csv", ".html"];
+      const fileName = file.name;
+      const ext = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+      if (!allowedExtensions.includes(ext)) {
+        showError("Formato de arquivo não suportado. Use: TXT, CSV ou HTML.");
+        return;
+      }
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        importedContent = e.target.result;
+        document.getElementById("fileInfo").innerText = `Arquivo importado: ${fileName} (${(file.size / 1024).toFixed(1)} KB)`;
+        document.getElementById("filePreview").innerText = importedContent.substring(0, 300) + (importedContent.length > 300 ? "..." : "");
+      };
+      reader.onerror = function() {
+        showError("Erro ao ler o arquivo.");
+      };
+      reader.readAsText(file);
+    }
+
+    function resetFile() {
+      importedContent = "";
+      selectedFile = null;
+      document.getElementById("fileInfo").innerText = "";
+      document.getElementById("filePreview").innerText = "";
+      importFileInput.value = "";
+      document.getElementById("downloadLink").innerHTML = "";
+      document.getElementById("errorMessage").innerText = "";
+    }
+
+    function showError(message) {
+      document.getElementById("errorMessage").innerText = message;
+    }
+
+    function showSpinner(show) {
+      document.getElementById("spinner").style.display = show ? "block" : "none";
+    }
+
+    function converterDocumento() {
+      const { jsPDF } = window.jspdf;
+      const format = document.getElementById("docFormat").value;
+      if (!importedContent) {
+        showError("Por favor, importe um arquivo primeiro.");
+        return;
+      }
+      localStorage.setItem("lastFormat", format);
+      document.getElementById("downloadLink").innerHTML = "";
+      showError("");
+      showSpinner(true);
+
+      setTimeout(() => {
+        if (format === "pdf") {
+          const doc = new jsPDF();
+          const lines = doc.splitTextToSize(importedContent, 180);
+          doc.text(lines, 10, 10);
+          const blob = doc.output("blob");
+          triggerDownload(blob, "documento.pdf");
+        } else if (format === "docx") {
+          const html = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <title>Documento</title>
+              </head>
+              <body>
+                <p>${importedContent.replace(/\n/g, "<br>")}</p>
+              </body>
+            </html>`;
+          const converted = htmlDocx.asBlob(html);
+          triggerDownload(converted, "documento.docx");
+        } else if (format === "html") {
+          const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <title>Documento</title>
+              </head>
+              <body>
+                <pre>${importedContent}</pre>
+              </body>
+            </html>`;
+          const blob = new Blob([htmlContent], {type: "text/html"});
+          triggerDownload(blob, "documento.html");
+        } else if (format === "txt") {
+          const blob = new Blob([importedContent], {type: "text/plain"});
+          triggerDownload(blob, "documento.txt");
+        } else if (format === "xlsx") {
+          const rows = importedContent.split('\n').map(line => [line]);
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+          XLSX.writeFile(wb, "documento.xlsx");
+        }
+        showSpinner(false);
+      }, 1000);
+    }
+
+    function triggerDownload(blob, fileName) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.innerText = `Clique aqui para baixar ${fileName}`;
+      const downloadDiv = document.getElementById("downloadLink");
+      downloadDiv.innerHTML = "";
+      downloadDiv.appendChild(link);
+      link.click();
+    }
+
+    window.addEventListener("load", () => {
+      const lastFormat = localStorage.getItem("lastFormat");
+      if (lastFormat) {
+        document.getElementById("docFormat").value = lastFormat;
+      }
+    });
+
+    /*********************************
+     * Funções do Gerador de QR Code para Wi‑Fi
+     *********************************/
+    function generateWifiQRCode() {
+      const ssid = document.getElementById("ssid").value;
+      const password = document.getElementById("password").value;
+      const encryption = document.getElementById("encryption").value;
+      if (!ssid) {
+        alert("Por favor, insira o nome da rede Wi‑Fi.");
+        return;
+      }
+      let qrData = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
+      document.getElementById("qrcodeWifi").innerHTML = "";
+      new QRCode(document.getElementById("qrcodeWifi"), qrData);
+    }
+
+    function clearWifiQRCode() {
+      document.getElementById("qrcodeWifi").innerHTML = "";
+    }
+
+    function exportWifiQRCode() {
+      const qrCanvas = document.querySelector("#qrcodeWifi canvas");
+      if (!qrCanvas) {
+        alert("Nenhum QR Code foi gerado ainda!");
+        return;
+      }
+      const link = document.createElement("a");
+      link.href = qrCanvas.toDataURL("image/png");
+      link.download = "qrcode_wifi.png";
+      link.click();
+    }
+
+    function shareWifiQRCode() {
+      const qrCanvas = document.querySelector("#qrcodeWifi canvas");
+      if (!qrCanvas) {
+        alert("Nenhum QR Code foi gerado ainda!");
+        return;
+      }
+      qrCanvas.toBlob(blob => {
+        const file = new File([blob], "qrcode_wifi.png", { type: "image/png" });
+        const data = { files: [file] };
+        if (navigator.canShare && navigator.canShare(data)) {
+          navigator.share(data).catch(error => console.log("Erro ao compartilhar", error));
+        } else {
+          alert("Seu navegador não suporta o compartilhamento de arquivos.");
+        }
+      });
+    }
+
+    // Eventos para os botões do Wi‑Fi
+    document.getElementById("generateBtn").addEventListener("click", generateWifiQRCode);
+    document.getElementById("clearBtn").addEventListener("click", clearWifiQRCode);
+    document.getElementById("exportBtn").addEventListener("click", exportWifiQRCode);
+    document.getElementById("shareBtn").addEventListener("click", shareWifiQRCode);
+  </script>
+</body>
+</html>
+
